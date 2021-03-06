@@ -1,0 +1,53 @@
+import torch
+import matplotlib.pyplot as plt
+import numpy as np
+
+x_data = torch.Tensor([[1.0],[2.0],[3.0]])
+y_data = torch.Tensor([[0],[0],[1]]) #二分类数据标签
+
+class LogisticModel(torch.nn.Module):
+  def __init__(self):
+    super(LogisticModel,self).__init__()
+    self.linear = torch.nn.Linear(1,1)
+
+  def forward(self, x):
+    y_pred = torch.sigmoid(self.linear(x))#在线性外加入sigmoid激活函数，sigmoid不含参数，是已经构造好的函数，故不需初始化
+    return y_pred
+
+model = LogisticModel()
+
+criterion = torch.nn.BCELoss(size_average=False)
+#二分类交叉熵损失函数BCELoss 计算 target 与 output 之间的二进制交叉熵。默认情况下，loss会基于element平均，如果size_average=False的话，loss会被累加。
+  
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+
+loss_list = []
+epoch = 1000
+for i in range(epoch):
+  y_pred = model(x_data)
+  loss = criterion(y_pred,y_data)
+  loss_list.append(loss)
+  #print(i,loss)
+  optimizer.zero_grad()
+  loss.backward()
+  optimizer.step()
+  #print('----------------------------------------------')
+print('w=',model.linear.weight.item())
+print('b=',model.linear.bias.item())
+
+plt.plot(range(epoch),loss_list)
+plt.ylabel('epoch')
+plt.xlabel('loss')
+plt.show()
+
+#预测
+x = np.linspace(0,10,200)#获取200个分布在0到10之间的数
+x_test = torch.Tensor(x).view(200,1)#将1行200列reshape为200行1列
+y_test = model(x_test)
+y = y_test.data.numpy()
+plt.plot(x, y)
+plt.plot([0,10],[0.5,0.5],c='r') #plot点(0,0.5),(10,0.5)之间的线段
+plt.grid() #显示背景格
+plt.xlabel('Hours')
+plt.ylabel('Probability of Pass')
+plt.show()
